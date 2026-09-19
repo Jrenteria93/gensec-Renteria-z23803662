@@ -38,28 +38,25 @@ import readline
 # You can set it as an environment variable GITHUB_PERSONAL_ACCESS_TOKEN or pass it as a 
 # parameter to the GithubFileLoader constructor.
 
-# Configure the embedding model used when adding documents to Chroma.
-embedding_function = VertexAIEmbeddings(
-    model_name="gemini-embedding-001",
-    project=os.getenv("GOOGLE_CLOUD_PROJECT"),
-    location="us-west1"
-)
+# set to True to use VertexAI embeddings. Ignore the deprecation message for now.
+use_vertex_embeddings = os.getenv("RAG_USE_VERTEX_EMBEDDINGS", "true").lower() == "true"
 
-
-# set to True to use VertexAI embeddings. Ignore the deprecation message for now. 
-use_vertex_embeddings = True
-
+# Only construct the embedding client that will actually be used, so the
+# unused backend's credential requirements don't crash startup.
 if use_vertex_embeddings:
-    vectorstore = Chroma(
-        embedding_function=embedding_function,
-        persist_directory="./rag_data/.chromadb"    # <===== location of the vector store database. Run once and reuse.
+    embedding_function = VertexAIEmbeddings(
+        model_name="gemini-embedding-001",
+        project=os.getenv("GOOGLE_CLOUD_PROJECT"),
+        location="us-west1"
     )
 else:
-    # original repo code uses Google AI studio, that cause a rate limit quota error. 
-    vectorstore = Chroma(
-       embedding_function=GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001", task_type="retrieval_query"),
-       persist_directory="./rag_data/.chromadb"
-    )
+    # original repo code uses Google AI studio, that cause a rate limit quota error.
+    embedding_function = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001", task_type="retrieval_query")
+
+vectorstore = Chroma(
+    embedding_function=embedding_function,
+    persist_directory="./rag_data/.chromadb"    # <===== location of the vector store database. Run once and reuse.
+)
 
 # Open or create the persistent Chroma vector database.
 
@@ -147,10 +144,21 @@ def load_csv(directory):
 # print(f"Loading: {urls}")
 # load_urls(urls)
 
+def try_load(description, load_fn, *args):
+    """Run a loader step and continue on failure instead of aborting the run.
+
+    Keeps one source's missing optional credential (e.g. a GitHub token) or
+    transient failure from blocking the rest of the ingestion pipeline.
+    """
+    print(description)
+    try:
+        load_fn(*args)
+    except Exception as e:
+        print(f"  Skipped ({type(e).__name__}): {e}")
+
 # Load selected external and local sources into the vector database.
 wiki_query = "LangChain"
-print(f"Loading Wikipedia pages on: {wiki_query}")
-load_wikipedia(wiki_query)
+try_load(f"Loading Wikipedia pages on: {wiki_query}", load_wikipedia, wiki_query)
 
 arxiv_query = "2310.03714"
 
@@ -159,34 +167,27 @@ arxiv_query = "2310.03714"
 # load_arxiv(arxiv_query)
 
 github_file = "butcher.py"
-print(f"Loading github file(s) with ending: {github_file}")
-load_github(github_file)
+try_load(f"Loading github file(s) with ending: {github_file}", load_github, github_file)
 
 youtube_video_id = "78600iosmis"
-print(f"Loading YouTube video: {youtube_video_id}")
-load_youtube(youtube_video_id)
+try_load(f"Loading YouTube video: {youtube_video_id}", load_youtube, youtube_video_id)
 
 # Source directories are configurable via environment variables (with the
 # repo's sample data as a fallback default) so no paths are hard-coded.
 text_directory = os.getenv("RAG_TXT_DIR", "rag_data/txt")
-print(f"Loading TXT files from: {text_directory}")
-load_txt(text_directory)
+try_load(f"Loading TXT files from: {text_directory}", load_txt, text_directory)
 
 pdf_directory = os.getenv("RAG_PDF_DIR", "rag_data/pdf")
-print(f"Loading PDF files from: {pdf_directory}")
-load_pdf(pdf_directory)
+try_load(f"Loading PDF files from: {pdf_directory}", load_pdf, pdf_directory)
 
 docx_directory = os.getenv("RAG_DOCX_DIR", "rag_data/docx")
-print(f"Loading DOCX files from: {docx_directory}")
-load_docx(docx_directory)
+try_load(f"Loading DOCX files from: {docx_directory}", load_docx, docx_directory)
 
 md_directory = os.getenv("RAG_MD_DIR", "rag_data/md")
-print(f"Loading MD files from: {md_directory}")
-load_md(md_directory)
+try_load(f"Loading MD files from: {md_directory}", load_md, md_directory)
 
 csv_directory = os.getenv("RAG_CSV_DIR", "rag_data/csv")
-print(f"Loading CSV files from: {csv_directory}")
-load_csv(csv_directory)
+try_load(f"Loading CSV files from: {csv_directory}", load_csv, csv_directory)
 
 print("RAG database initialized with the following sources.")
 retriever = vectorstore.as_retriever()
