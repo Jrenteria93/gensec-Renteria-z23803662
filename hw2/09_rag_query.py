@@ -6,7 +6,7 @@ from langchain_chroma import Chroma
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 
 # fau-gensec changes:
 from langchain_google_vertexai import VertexAIEmbeddings
@@ -15,14 +15,25 @@ from langchain_core.prompts import ChatPromptTemplate
 # Configure the chat model used to answer questions from retrieved context.
 llm = ChatGoogleGenerativeAI(model=os.getenv("GOOGLE_MODEL"))
 
+# set to True to use VertexAI embeddings. Ignore the deprecation message for now.
+use_vertex_embeddings = os.getenv("RAG_USE_VERTEX_EMBEDDINGS", "true").lower() == "true"
+
+# Only construct the embedding client that will actually be used, so the
+# unused backend's credential requirements don't crash startup.
+if use_vertex_embeddings:
+    embedding_function = VertexAIEmbeddings(
+        model_name="gemini-embedding-001",
+        project=os.getenv("GOOGLE_CLOUD_PROJECT"),
+        location="us-west1"
+    )
+else:
+    # original repo code uses Google AI studio, that cause a rate limit quota error.
+    embedding_function = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001", task_type="retrieval_query")
+
 # Open the persisted vector database and create a retriever from it.
 vectorstore = Chroma(
      persist_directory="./rag_data/.chromadb",
-     embedding_function=VertexAIEmbeddings(
-         model_name="gemini-embedding-001",
-         project=os.getenv("GOOGLE_CLOUD_PROJECT"),
-         location="us-west1"
-     )
+     embedding_function=embedding_function
 )
 
 retriever = vectorstore.as_retriever()
