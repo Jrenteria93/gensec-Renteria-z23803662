@@ -1,7 +1,11 @@
 import os
+import re
+import ipaddress
 import readline
+import requests
 from langchain.agents import create_agent
 from langchain.messages import HumanMessage
+from langchain.tools import tool
 from langchain_experimental.tools import PythonREPLTool
 from langchain_community.tools import ShellTool
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -11,12 +15,56 @@ llm = ChatGoogleGenerativeAI(model=os.getenv("GOOGLE_MODEL"))
 #from langchain_anthropic import ChatAnthropic
 #llm = ChatAnthropic(model=os.getenv("ANTHROPIC_MODEL"))
 
-tools = [PythonREPLTool(), ShellTool()]
+@tool
+def virustotal_lookup(indicator: str) -> str:
+    """Look up a file hash (MD5, SHA-1, or SHA-256), IP address, or domain on
+    VirusTotal and return how many security engines flagged it as malicious,
+    suspicious, or harmless.  Use this to check whether an indicator of
+    compromise is known to be malicious."""
+    api_key = os.getenv("VIRUSTOTAL_API_KEY")
+    if not api_key:
+        return "Error: VIRUSTOTAL_API_KEY environment variable is not set."
+
+    indicator = indicator.strip()
+    if re.fullmatch(r"[0-9a-fA-F]{32}|[0-9a-fA-F]{40}|[0-9a-fA-F]{64}", indicator):
+        kind, endpoint = "file", "files"
+    else:
+        try:
+            ipaddress.ip_address(indicator)
+            kind, endpoint = "IP address", "ip_addresses"
+        except ValueError:
+            kind, endpoint = "domain", "domains"
+
+    try:
+        response = requests.get(
+            f"https://www.virustotal.com/api/v3/{endpoint}/{indicator}",
+            headers={"x-apikey": api_key},
+            timeout=30,
+        )
+    except requests.RequestException as e:
+        return f"Error contacting VirusTotal: {e}"
+
+    if response.status_code == 404:
+        return f"VirusTotal has no record of {kind} {indicator}."
+    if response.status_code != 200:
+        return f"VirusTotal error {response.status_code}: {response.text[:200]}"
+
+    stats = response.json()["data"]["attributes"].get("last_analysis_stats", {})
+    return (f"VirusTotal results for {kind} {indicator}: "
+            f"{stats.get('malicious', 0)} malicious, "
+            f"{stats.get('suspicious', 0)} suspicious, "
+            f"{stats.get('harmless', 0)} harmless "
+            f"({stats.get('undetected', 0)} undetected).")
+
+tools = [PythonREPLTool(), ShellTool(), virustotal_lookup]
 
 system_prompt = """You are an agent designed to write and execute python code and
       Linux shell commands to answer questions.  You have access to a python
       REPL, which you can use to execute Python code, and a terminal tool,
-      which you can use to run Linux shell commands.  Choose whichever tool
+      which you can use to run Linux shell commands.  You also have a
+      virustotal_lookup tool; use it whenever you are asked whether a file
+      hash, IP address, or domain is malicious or suspicious, and report the
+      engine counts it returns.  Choose whichever tool
       is best suited to the question.  If you get an error, debug your code
       or command and try again.  Only use the output of your code or commands
       to answer the question.  You might know the answer without running
