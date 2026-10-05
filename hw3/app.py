@@ -3,6 +3,7 @@ import readline
 from langchain.agents import create_agent
 from langchain.messages import HumanMessage
 from langchain_experimental.tools import PythonREPLTool
+from langchain_community.tools import ShellTool
 from langchain_google_genai import ChatGoogleGenerativeAI
 llm = ChatGoogleGenerativeAI(model=os.getenv("GOOGLE_MODEL"))
 #from langchain_openai import ChatOpenAI
@@ -10,16 +11,18 @@ llm = ChatGoogleGenerativeAI(model=os.getenv("GOOGLE_MODEL"))
 #from langchain_anthropic import ChatAnthropic
 #llm = ChatAnthropic(model=os.getenv("ANTHROPIC_MODEL"))
 
-tools = [PythonREPLTool()]
+tools = [PythonREPLTool(), ShellTool()]
 
-system_prompt = """You are an agent designed to write and execute python code to answer
-      questions.  You have access to a python REPL, which you can use to
-      execute Python code.  If you get an error, debug your code and try
-      again.  Only use the output of your code to answer the question.  You
-      might know the answer without running any code, but you should still
-      run the code to get the answer.  If it does not seem like you can
-      write code to answer the question, just return I don't know as the
-      answer.\n\n"""
+system_prompt = """You are an agent designed to write and execute python code and
+      Linux shell commands to answer questions.  You have access to a python
+      REPL, which you can use to execute Python code, and a terminal tool,
+      which you can use to run Linux shell commands.  Choose whichever tool
+      is best suited to the question.  If you get an error, debug your code
+      or command and try again.  Only use the output of your code or commands
+      to answer the question.  You might know the answer without running
+      anything, but you should still run code or commands to get the answer.
+      If it does not seem like you can write code or commands to answer the
+      question, just return I don't know as the answer.\n\n"""
 
 agent = create_agent(model=llm, tools=tools, system_prompt=system_prompt)
 
