@@ -2,3 +2,6 @@ env/
 .venv
 *.pyc
 __pycache__/
+
+# fast-agent logs and session history
+.fast-agent/

@@ -30,8 +30,12 @@ fast = FastAgent("hw4-hash-analyst")
 MODEL = os.environ.get("GOOGLE_MODEL", "google.gemini-3.6-flash")
 
 # The task the agent performs end to end, using the two MCP servers.
+# The filesystem server is rooted at the data/ folder, so file paths given
+# to it are relative to that folder (use "hashes.txt", not "data/hashes.txt").
 TASK = (
-    "Read the file data/hashes.txt using the filesystem server. It contains "
+    "Read the file hashes.txt using the filesystem server. Its paths are "
+    "relative to the server's root directory, so use plain names like "
+    "'hashes.txt' and 'report.md' with no 'data/' prefix. The file contains "
     "lines with a type label and a value: hash lines (md5, sha1, sha256, "
     "sha512, ntlm, bcrypt) and a few 'password' lines with plaintext "
     "passwords. Ignore blank lines and lines starting with '#'.\n\n"
@@ -41,7 +45,7 @@ TASK = (
     "command.\n"
     "For every password value, call check_password_strength and report the "
     "rating and reasons.\n\n"
-    "Then write a well-structured Markdown report to data/report.md using the "
+    "Then write a well-structured Markdown report to report.md using the "
     "filesystem server. Include a section for the hashes (a table with the "
     "value, identified type, hashcat mode, and example command) and a section "
     "for the passwords (value, rating, and explanation). Confirm when the "
