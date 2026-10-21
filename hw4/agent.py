@@ -17,10 +17,17 @@ after exporting ``GOOGLE_API_KEY``.
 """
 
 import asyncio
+import os
 
 from fast_agent import FastAgent
 
 fast = FastAgent("hw4-hash-analyst")
+
+# Model is read from the GOOGLE_MODEL environment variable so it can be
+# swapped without editing code (e.g. when one model is overloaded). The
+# value is a full fast-agent model string, including the provider prefix.
+# Falls back to google.gemini-3.6-flash when the variable is not set.
+MODEL = os.environ.get("GOOGLE_MODEL", "google.gemini-3.6-flash")
 
 # The task the agent performs end to end, using the two MCP servers.
 TASK = (
@@ -51,6 +58,7 @@ TASK = (
         "only read and write files through the filesystem server."
     ),
     servers=["hashtools", "filesystem"],
+    model=MODEL,
     default=True,
 )
 async def main() -> None:

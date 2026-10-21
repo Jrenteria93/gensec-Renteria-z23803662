@@ -1,0 +1,69 @@
+{
+  "schema_version": 3,
+  "session_id": "2610211501-c5e0xA",
+  "created_at": "2026-10-21T15:01:45.893441",
+  "last_activity": "2026-10-21T15:02:53.434636",
+  "metadata": {
+    "title": null,
+    "label": null,
+    "first_user_preview": "Read the file data/hashes.txt using the filesystem server. It contains lines with a type label and a value: hash lines (md5, sha1, sha256, sha512, ntlm, bcrypt) and a few 'password' lines with plaintext passwords. Ignore blank lines and lin",
+    "pinned": false,
+    "extras": {
+      "model": "google.gemini-3.5-flash-lite"
+    }
+  },
+  "continuation": {
+    "active_agent": "hash-analyst",
+    "cwd": "C:\\Users\\Spart\\gensec-Renteria-z23803662\\hw4",
+    "git": null,
+    "lineage": {
+      "forked_from": null,
+      "acp_session_id": null
+    },
+    "agents": {
+      "hash-analyst": {
+        "history_file": "history_hash-analyst.json",
+        "resolved_prompt": "You are a security analyst assistant. Use the available MCP tools to identify hashes, suggest hashcat modes, and rate passwords, then save a Markdown report. Always use the tools rather than guessing, and only read and write files through the filesystem server.",
+        "model": "gemini-3.5-flash-lite",
+        "model_spec": "google.gemini-3.5-flash-lite",
+        "provider": "google",
+        "request_settings": {
+          "max_tokens": 65536,
+          "temperature": null,
+          "top_p": null,
+          "top_k": null,
+          "min_p": null,
+          "presence_penalty": null,
+          "frequency_penalty": null,
+          "repetition_penalty": null,
+          "use_history": true,
+          "parallel_tool_calls": true,
+          "max_iterations": 9999,
+          "tool_result_mode": "postprocess",
+          "streaming_timeout": 120.0,
+          "service_tier": null
+        },
+        "card_provenance": [],
+        "attachment_refs": [
+          {
+            "ref": "mcp_server:filesystem"
+          },
+          {
+            "ref": "mcp_server:hashtools"
+          }
+        ],
+        "model_overlay_refs": []
+      }
+    }
+  },
+  "analysis": {
+    "usage_summary": {
+      "prompt_tokens": 87519,
+      "completion_tokens": 2307,
+      "total_tokens": 89826
+    },
+    "timing_summary": null,
+    "provider_diagnostics": [],
+    "transport_diagnostics": []
+  }
+}

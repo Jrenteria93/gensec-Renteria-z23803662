@@ -7,6 +7,8 @@
 
 # Google Gemini via the google.<model> provider string. The API key is
 # read from the GOOGLE_API_KEY environment variable -- never stored here.
+# agent.py overrides this per-agent from the GOOGLE_MODEL environment
+# variable (same default); this value is the fallback for other commands.
 default_model: google.gemini-3.6-flash
 
 google:
@@ -26,11 +28,18 @@ mcp:
       args: ["run", "mcp-server.py"]
 
     # Official filesystem server, limited to the ./data folder. It can
-    # only read and write files beneath that directory. npx resolves to
-    # npx.cmd automatically on Windows.
+    # only read and write files beneath that directory.
+    #
+    # On Windows, launch npx through "cmd /c". npx is a .cmd batch wrapper
+    # that spawns node; launched directly under asyncio's Proactor loop its
+    # stdio pipe can close early, giving "I/O operation on closed pipe" and
+    # a ServerInitializationError. Going through cmd keeps the pipe attached
+    # to the real server process.
     filesystem:
-      command: "npx"
+      command: "cmd"
       args:
+        - "/c"
+        - "npx"
         - "-y"
         - "@modelcontextprotocol/server-filesystem"
         - "./data"
