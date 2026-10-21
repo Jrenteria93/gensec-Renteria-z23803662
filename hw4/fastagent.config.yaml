@@ -1,0 +1,36 @@
+# fast-agent configuration for the hw4 MCP homework.
+#
+# Declares the default model and the two MCP servers the agent connects
+# to: the local hash/password analysis server (run with uv) and the
+# official Model Context Protocol filesystem server (run with npx),
+# scoped to the hw4/data directory only.
+
+# Google Gemini via the google.<model> provider string. The API key is
+# read from the GOOGLE_API_KEY environment variable -- never stored here.
+default_model: google.gemini-3.6-flash
+
+google:
+  api_key: "${GOOGLE_API_KEY}"
+
+logger:
+  progress_display: true
+  show_chat: true
+  show_tools: true
+
+mcp:
+  servers:
+    # Our own FastMCP server from hw4/mcp-server.py, launched with uv so
+    # it runs inside this project's virtual environment.
+    hashtools:
+      command: "uv"
+      args: ["run", "mcp-server.py"]
+
+    # Official filesystem server, limited to the ./data folder. It can
+    # only read and write files beneath that directory. npx resolves to
+    # npx.cmd automatically on Windows.
+    filesystem:
+      command: "npx"
+      args:
+        - "-y"
+        - "@modelcontextprotocol/server-filesystem"
+        - "./data"
