@@ -1,0 +1,8 @@
+[project]
+name = "04-mcp"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fast-agent-mcp==0.9.30",
+    "mcp==1.28.1",
+]
